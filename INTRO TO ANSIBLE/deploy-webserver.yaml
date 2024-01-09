@@ -1,0 +1,55 @@
+---
+- name: Demo playbook
+  hosts: myserver
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: latest
+        
+    - name: Start nginx service
+      service:
+        name: nginx
+        enabled: true
+        state: started
+
+    #- name: Create a custom index.html file
+    #  copy:
+   #     dest: /var/www/html/index.html
+    #    content: |
+     #     <h1>Hello CSC-519 World!</h1>
+
+    #- name: Expose port 80 with iptables
+    #  shell: 
+    #    "sudo iptables -I INPUT -p tcp -m tcp --dport 80 -j ACCEPT"
+
+    - name: Remove processes using port 80
+      shell: "sudo kill -9 $(sudo lsof -t -i :80)"
+      ignore_errors: yes
+      changed_when: false
+      async: 0
+      poll: 0
+
+    - name: Create a directory for your Node.js app
+      file:
+        path: /var/www/nodejs_app
+        state: directory
+
+    - name: Copy your Node.js app files
+      copy:
+        src: /home/sbapat2/app.js
+        dest: /var/www/nodejs_app
+        remote_src: yes
+
+    - name: Install npm packages for your app
+      command:
+        cmd: npm install
+        chdir: /var/www/nodejs_app
+
+    - name: Run your Node.js app
+      command:
+        cmd: node /var/www/nodejs_app/app.js
+        async: 1000
+        poll: 0
